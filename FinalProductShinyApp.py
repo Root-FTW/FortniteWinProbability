@@ -22,7 +22,7 @@ url = 'https://fortnite-api.com/v2/stats/br/v2'
 account_types = ['epic'] #, 'xbl', 'psn'
 
 headers = dict(
-    Authorization = '3bb03286-20da-4033-9bdc-b70bbdb3399e'
+    Authorization = 'YOUR API KEY'
 )
 
 data_rows = []
