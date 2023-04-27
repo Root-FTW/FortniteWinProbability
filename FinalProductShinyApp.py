@@ -1,41 +1,17 @@
-# This is the final product of the code which ends with an interactive Python Shiny App
-# The code is broken up into four categories
-#   1. Game Log Extract
-#   2. API Connect
-#   3. Monte Carlo Simulation
-#   4. Shiny App
-
-# Current run time is about 20 seconds: need to optimize API call
-
-# GAME LOG EXRACT
 import sys
 import re
 import os
 import datetime
 import pandas as pd
 
-with open(r"C:\Users\rootf\AppData\Local\FortniteGame\Saved\Logs\FortniteGame.log", 'r', encoding='utf-8')  as f:
-    skydive_lines = [line.strip() for line in f if 'begin skydiving from bus' in line] # take all the lines that have this string
-    player_data = {'match_time': [], 'code': [], 'player_id': [], 'player_name': []} # make your columns
-    for line in skydive_lines:
-        data = re.findall(r'\[(.*?)\]', line) # antthing within the brackets
-        player_data['match_time'].append(pd.to_datetime(data[0], format='%Y.%m.%d-%H.%M.%S:%f')) # time is the first bracket in this line
-        player_data['code'].append(data[1]) # the code is the second bracket of the line
-        player_data['player_id'].append(data[2]) # and so on.....
-        player_data['player_name'].append(data[3])
+# Leemos los nombres desde el archivo names.txt
+with open(r"C:\Users\rootf\Downloads\Compressed\FortniteWinProbability-main\FortniteWinProbability-main\names.txt", 'r', encoding='utf-8') as f:
+    player_names = [line.strip() for line in f]
 
-    df = pd.DataFrame.from_dict(player_data) # convert this dict into a pandas dataframe
+# Generamos el DataFrame con los nombres de los jugadores
+df = pd.DataFrame(player_names, columns=['player_name'])
 
-   # Calculate match number based on time difference
-    df['match_time'] = pd.to_timedelta(df['match_time'])
-    time_diff = df['match_time'].diff().fillna(pd.Timedelta(seconds=0))
-    is_new_match = time_diff >= pd.Timedelta(minutes=5)
-    df['match_number'] = is_new_match.cumsum() + 1 # add in the new match number
-
-    df.to_csv(f"C:/Users/rootf/Dropbox/FortniteSkillMatch_project/script/match_data/skydiving_data{datetime.datetime.now().strftime('%m-%d-%Y.%H.%M.%S')}.csv", index=False) # save to a csv ... Will need to update this and save to DB later
-
-
-# API CONNECT
+# A continuación, comienza la parte de API Connect, deja todo igual a partir de aquí
 
 import json
 import requests
@@ -43,7 +19,6 @@ import pandas as pd
 
 url = 'https://fortnite-api.com/v2/stats/br/v2'
 
-player_names = df[df["match_number"] == df["match_number"].max()]["player_name"].tolist()
 account_types = ['epic'] #, 'xbl', 'psn'
 
 headers = dict(
@@ -92,6 +67,9 @@ else:
     sys.exit()
 
 unique_df = merged_df.drop_duplicates()
+
+
+unique_df['match_number'] = 1
 
 # MONTE CARLO SIMULATION
 
@@ -164,7 +142,7 @@ def simulate_matchups(latest_match):
                     if simulate_game(latest_match['kd'][i], latest_match['kd'][j]) == 1:
                         p1_wins += 1
                 matchups.loc[p1, p2] = p1_wins / num_simulations
-    user_name = 'Keep_OLS_Blue'
+    user_name = 'RootFTW'
     a_wins = matchups.loc[user_name].sort_values(ascending=False)
     ranks = pd.DataFrame({'player_name': a_wins.index, 'win_prob': a_wins.values, 'rank': range(1, num_players + 1)})
     
